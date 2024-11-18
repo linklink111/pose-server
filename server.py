@@ -1,13 +1,21 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 import cohere
+import os
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 
-# 从环境变量中读取API Key
-import os
-COHERE_API_KEY = os.getenv('COHERE_API_KEY')
-print(COHERE_API_KEY)
-co = cohere.ClientV2(api_key='qekr0Tz4a4jxbxzY3EMTKkfPlXDQSiyDkBHGweFx')
+# 加载 .env 文件
+load_dotenv()
+
+# 获取 COHERE_API_KEY
+api_key = os.getenv('COHERE_API_KEY')
+
+if not api_key:
+    raise ValueError("Please set the COHERE_API_KEY environment variable.")
+
+# 初始化 Cohere 客户端
+co = cohere.ClientV2(api_key=api_key)
 
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -28,6 +36,26 @@ def chat():
         return jsonify({'response': response.replies[0].content})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/chat_stream', methods=['POST'])
+def chat_stream():
+    data = request.json
+    messages = data.get('messages', [])
+
+    if not messages:
+        return jsonify({'error': 'No messages provided'}), 400
+
+    response = co.chat_stream(
+        model="command-r-plus-08-2024",
+        messages=messages,
+    )
+
+    def generate():
+        for event in response:
+            if event.type == "content-delta":
+                yield f"data: {event.delta.message.content.text}\n\n"
+
+    return Response(generate(), mimetype='text/event-stream')
 
 if __name__ == '__main__':
     app.run(debug=True)

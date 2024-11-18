@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Stream</title>
+</head>
+<body>
+    <h1>Chat Stream</h1>
+    <input type="text" id="messageInput" placeholder="Type a message">
+    <button onclick="sendMessage()">Send</button>
+    <pre id="response"></pre>
+
+    <script>
+        let source;
+
+        function sendMessage() {
+            const message = document.getElementById('messageInput').value;
+            if (!message) return;
+
+            // Send the message to the server
+            fetch('/chat_stream', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    messages: [
+                        { role: 'user', content: message }
+                    ]
+                })
+            }).then(response => {
+                if (response.ok) {
+                    // Start listening to the stream
+                    source = new EventSource('/chat_stream', {
+                        withCredentials: false
+                    });
+
+                    source.onmessage = function (event) {
+                        const responseElement = document.getElementById('response');
+                        responseElement.textContent += event.data;
+                    };
+
+                    source.onerror = function () {
+                        source.close();
+                    };
+                } else {
+                    response.json().then(data => {
+                        alert(`Error: ${data.error}`);
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>
