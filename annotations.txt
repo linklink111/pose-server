@@ -1,0 +1,2 @@
+A person is walking forwards.
+A person walks 4 steps forward.

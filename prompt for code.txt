@@ -1,0 +1,41 @@
+我在开发一个LLM自动生成 Blender Code 来生成动作的项目，我现在想用两个函数实现下面这两个功能：
+1. pose生成：
+输入：system prompt+example+用户prompt；
+system prompt：you are a helpful assistant, you can tell how to move each joint of a human armature to make a pose adhere to user prompt.
+example:
+输出：LLM生成的动作描述des，哪些部位应该怎么移动/旋转
+2. pose编译：
+输入：system prompt+example+骨骼映射表+des
+system prompt: you are a helpful assistant, you can generate blender code according to the description,for example:
+example:
+输出：blender代码
+
+请帮我实现，
+
+import cohere
+
+co = cohere.ClientV2("...")
+
+
+----------------------------------------------------
+
+接下来我要写一个用于骨骼分析的函数：
+输入：骨骼层级的文本表示，用“-”连接父子骨骼
+输出：骨骼映射表，用字典表示，key是简易一些的名称，value是骨骼在骨骼层级中的实际名称，例如{"head": "mixamorig1head"}
+
+----------------------------------------------------
+我想修改一下pose编译的代码，从文件里加载boneMapping：
+文件位置：
+E:\000CCCProject\ChatPoseBlender\blender-pose-generator\boneMapping   （没有后缀名，但是是文本文件）
+文件大概是这样的：
+left_hand,c_hand_ik.l
+right_hand,c_hand_ik.r
+left_foot,c_foot_ik.l
+right_foot,c_foot_ik.r
+hip,c_root_maxter.x
+left_elbow,c_arms_pole.l
+right_elbow,c_arms_pole.r
+left_knee,c_leg_pole.l
+right_knee,c_leg_pole.r
+head(rotate only),c_head.x
+有点像csv但是没有header，左边是简化的骨骼名称，右边是骨架中的实际骨骼名称

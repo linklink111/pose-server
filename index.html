@@ -1,56 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Stream</title>
+    <title>任务列表</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
 </head>
 <body>
-    <h1>Chat Stream</h1>
-    <input type="text" id="messageInput" placeholder="Type a message">
-    <button onclick="sendMessage()">Send</button>
-    <pre id="response"></pre>
+    <h1>任务列表</h1>
+    <div id="task-list"></div>
 
     <script>
-        let source;
+        function fetchTasks() {
+            fetch('http://localhost:5050/get_recent_result')
+                .then(response => response.json())
+                .then(data => {
+                    const taskListDiv = document.getElementById('task-list');
+                    taskListDiv.innerHTML = ''; // 清空之前的任务列表
 
-        function sendMessage() {
-            const message = document.getElementById('messageInput').value;
-            if (!message) return;
-
-            // Send the message to the server
-            fetch('/chat_stream', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    messages: [
-                        { role: 'user', content: message }
-                    ]
+                    data.results.forEach(task => {
+                        const taskDiv = document.createElement('div');
+                        taskDiv.className = 'task';
+                        taskDiv.innerHTML = `
+                            <strong>任务ID:</strong> ${task.taskid}<br>
+                            <strong>提示:</strong> ${task.prompt}<br>
+                            <strong>响应:</strong> ${task.response}<br>
+                            <hr>
+                        `;
+                        taskListDiv.appendChild(taskDiv);
+                    });
                 })
-            }).then(response => {
-                if (response.ok) {
-                    // Start listening to the stream
-                    source = new EventSource('/chat_stream', {
-                        withCredentials: false
-                    });
-
-                    source.onmessage = function (event) {
-                        const responseElement = document.getElementById('response');
-                        responseElement.textContent += event.data;
-                    };
-
-                    source.onerror = function () {
-                        source.close();
-                    };
-                } else {
-                    response.json().then(data => {
-                        alert(`Error: ${data.error}`);
-                    });
-                }
-            });
+                .catch(error => {
+                    console.error('Error fetching tasks:', error);
+                });
         }
+
+        // 初始加载时获取任务列表
+        fetchTasks();
+
+        // 每10秒请求一次任务列表
+        setInterval(fetchTasks, 10000);
     </script>
 </body>
 </html>
