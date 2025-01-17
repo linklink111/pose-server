@@ -1,3 +1,9 @@
+# 版本信息：command r v1，
+# 主要特点：1. 一次性生成 pose code；2. 移动和旋转同时生成；
+# 主要问题：1. 整体质量较低，很容易出错；2. 生成pose code的时候方向必定出错，需要一个检查步骤；3. 有时会遗漏骨骼的maping；
+# 改进方向：1. 分帧生成；2. 移动和旋转分开；3. 使用相对位置（例如手在头的上方）；
+#          4. 旋转值或移动值离散化（轻微、中等、最大）（似乎与相对位置只能用一个）
+#
 import cohere
 import time
 import os
@@ -509,7 +515,7 @@ def pose_design_streaming(user_prompt):
     
     return pose_description.strip()
 
-# Compilers Helper Start ==========================================================================
+  
 # 在 posecode 的前面插入 bone map
 def bone_map_header_insert(bone_mapping, pose_code):
     system_prompt = '''
@@ -732,116 +738,71 @@ from mathutils import Vector, Matrix
 # 确保代码基于世界坐标方向进行增量操作
 """
     return header + converted_code
-def write_to_file(output_path, pose_description, pose_code, pose_code_fixed, pose_code_with_header, pose_code_convert_to_world_coord,timing_info):
+
+def write_to_file(output_path, **contents):
     """
-    将 pose_description, pose_code, pose_code_with_header 和 timing_info 写入文件。
+    将内容写入文件，每部分以标题分隔。
 
     :param output_path: 输出文件路径
-    :param pose_description: 姿势描述文本
-    :param pose_code: 生成的姿势代码
-    :param pose_code_with_header: 带头部信息的姿势代码
-    :param timing_info: 包含计时信息的文本
+    :param contents: 以标题为键，内容为值的字典
     """
     with open(output_path, "w", encoding="utf-8") as file:
-        file.write("Timing Information=======================================:\n")
-        file.write(timing_info + "\n\n")
-        
-        file.write("Pose Description=======================================:\n")
-        file.write(pose_description + "\n\n")
-        
-        file.write("Pose Code=======================================:\n")
-        file.write(pose_code + "\n\n")
+        for title, content in contents.items():
+            file.write(f"{title}=======================================:\n")
+            file.write(content + "\n\n")
 
-        file.write("Pose Code Check Direction=======================================:\n")
-        file.write(pose_code_fixed + "\n\n")
-        
-        file.write("Pose Code with Header=======================================:\n")
-        file.write(pose_code_with_header + "\n\n")
+def write_final_code(final_code_path, final_code):
+    """
+    将最终的代码单独写入一个 Python 文件。
 
-        file.write("Pose Code converted to world coord=======================================:\n")
-        file.write(pose_code_convert_to_world_coord + "\n\n")
-
-# Compilers Helper End ==========================================================================
+    :param final_code_path: 最终代码输出路径
+    :param final_code: 最终代码内容
+    """
+    with open(final_code_path, "w", encoding="utf-8") as file:
+        file.write(final_code)
 
 if __name__ == "__main__":
-    # 基础生成
-
-    # 记录总开始时间
     overall_start_time = time.time()
     timing_info = []
 
+    # 初始参数
     direction_text = "前方是+y，后方是-y，左边是-x，右边是+x，上方是+z，下方是-z。"
     model_info_text = "角色身高是1.7m，臂长是0.5m，腿长是0.8m。"
-    theory_hint_text = ""
-
-    # Step 1: Load bone mapping
     bone_mapping_path = r"E:\000CCCProject\ChatPoseBlender\blender-pose-generator\boneMapping\arp_map2"
-    start_time = time.time()
-    bone_mapping = load_bone_mapping(bone_mapping_path)
-    elapsed_time = time.time() - start_time
-    timing_info.append(f"Loading bone mapping took {elapsed_time:.4f} seconds")
-    
-    # Step 2: Generate pose description
-    start_time = time.time()
-    pose_description = pose_design_streaming("A person slaps with his left hand.")
-    elapsed_time = time.time() - start_time
-    timing_info.append(f"Generating pose description took {elapsed_time:.4f} seconds")
-    
-    # Step 3: Generate pose code sequence
-    start_time = time.time()
-    pose_code = generate_pose_code_sequence_streaming(pose_description,direction_text,model_info_text)
-    elapsed_time = time.time() - start_time
-    timing_info.append(f"Generating pose code sequence took {elapsed_time:.4f} seconds")
-
-    # Step 3-1: 检查骨骼移动的方向
-    start_time = time.time()
-    pose_code_fixed = pose_code # pose_code_direction_check_and_fix(pose_code,direction_text)
-    elapsed_time = time.time() - start_time
-    timing_info.append(f"Checking bone directions took {elapsed_time:.4f} seconds")
-    
-    pose_code = pose_code_fixed
-    
-    # Step 4: Insert bone mapping header
-    start_time = time.time()
-    pose_code_with_header = bone_map_header_insert_re(bone_mapping, pose_code)
-    elapsed_time = time.time() - start_time
-    timing_info.append(f"Inserting bone mapping header took {elapsed_time:.4f} seconds")
-
-    # Step 5: Convert bone operations to world coordinates
-    start_time = time.time()
-    pose_code_convert_to_world_coord = convert_to_world_coordinates_re(pose_code_with_header)
-    elapsed_time = time.time() - start_time
-    timing_info.append(f"Converting bone operations to world coordinates took {elapsed_time:.4f} seconds")
-    
-    # Step 6: Write output to file
     output_file_path = r"E:\000CCCProject\ChatPoseBlender\blender-pose-generator\output\pose_output00001.txt"
-    start_time = time.time()
-    write_to_file(
-        output_file_path, 
-        pose_description, 
-        pose_code, 
-        pose_code_fixed,
-        pose_code_with_header, 
-        pose_code_convert_to_world_coord,
-        "\n".join(timing_info)
-    )
-    elapsed_time = time.time() - start_time
-    timing_info.append(f"Writing output to file took {elapsed_time:.4f} seconds")
+    final_code_path = r"E:\000CCCProject\ChatPoseBlender\blender-pose-generator\Scripts\pose_generator\final_code.py"
 
-    '''
-    import bpy
+    # 步骤计时封装
+    def timed_step(description, func, *args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        elapsed_time = time.time() - start_time
+        timing_info.append(f"{description} took {elapsed_time:.4f} seconds")
+        return result
 
-    # 获取骨骼对象
-    armature = bpy.data.objects['rig']  # 替换为你的骨骼名称
-    bpy.context.view_layer.objects.active = armature
-    '''
-    
-    # 记录总时间
+    # 流程
+    bone_mapping = timed_step("Loading bone mapping", load_bone_mapping, bone_mapping_path)
+    pose_description = timed_step("Generating pose description", pose_design_streaming, "A person slaps with his left hand.")
+    pose_code = timed_step("Generating pose code sequence", generate_pose_code_sequence_streaming, pose_description, direction_text, model_info_text)
+    # pose_code_fixed = timed_step("Checking bone directions", lambda x: x, pose_code)  # 如需实际修正，可替换为具体函数
+    pose_code_fixed = timed_step("Checking bone directions", pose_code_direction_check_and_fix, pose_code, direction_text)  # 如需实际修正，可替换为具体函数
+    pose_code_with_header = timed_step("Inserting bone mapping header", bone_map_header_insert_re, bone_mapping, pose_code_fixed)
+    pose_code_convert_to_world_coord = timed_step("Converting to world coordinates", convert_to_world_coordinates_re, pose_code_with_header)
+
+    # 写入文件
+    timed_step("Writing output to file", write_to_file, output_file_path,
+               Timing_Info="\n".join(timing_info),
+               Pose_Description=pose_description,
+               Pose_Code=pose_code,
+               Pose_Code_Check_Direction=pose_code_fixed,
+               Pose_Code_with_Header=pose_code_with_header,
+               Pose_Code_Converted_to_World_Coord=pose_code_convert_to_world_coord)
+
+    # 单独写入最终代码
+    write_final_code(final_code_path, pose_code_convert_to_world_coord)
+
+    # 记录总时间并追加至文件
     overall_elapsed_time = time.time() - overall_start_time
     timing_info.append(f"Total execution time: {overall_elapsed_time:.4f} seconds")
-    
-    # 最后更新文件内容，包含完整的计时信息
     with open(output_file_path, "a", encoding="utf-8") as file:
-        file.write("\nTiming Information=======================================:\n")
-        file.write("\n".join(timing_info) + "\n")
-
+        file.write(f"Timing Information=======================================:\n{timing_info[-1]}\n")
