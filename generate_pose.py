@@ -46,6 +46,16 @@ def query_command_r_plus_08_2024_streaming(user_prompt, system_prompt=None):
         print(f"An error occurred: {e}")
         return None
 
+# Theoritical Teacher in the overview graph
+def planning_pose(user_prompt):
+    system_prompt = '''You are a helpful assistant. You can plan how to make a motion animation for a character.
+Given the description of thr motion, you can smartly choose a scheme to make it.
+You can choose a scheme from below:
+
+1. Decomposite to Key Poses. This scheme is good for substantial motion.
+
+2. Base pose and partial movement. This scheme is good for simple motion.
+'''
 # Pose Designer + Physical Teacher(Relative Position)
 def generate_pose_design(user_prompt):
     system_prompt = '''You are a helpful assistant. You can design a pose for a character.
@@ -54,17 +64,22 @@ def generate_pose_design(user_prompt):
     "pose": The pose, which should be a relative joint position, like "left hand slightly above the head."
     For example:
     [
-        {"time": 0.5, "pose": "left hand moderately above the head."},
+        {"time": 0.5, "pose": "left hand moderately above the head. the waist is slightly bent over. the root is rotated 90 degrees. The head is slightly bent over."},
         {"time": 1.0, "pose": "right hand slightly below the hip, and left foot is above the ground."},
-        {"time": 2.0, "pose": "left foot is touching the chest."},
-        {"time": 3.0, "pose": "right foot maximally above the ground"},
+        {"time": 2.0, "pose": "left foot is touching the chest. left hand is moderately in the left of the chest to keep balance."},
+        {"time": 3.0, "pose": "right foot maximally above the ground, and maximally stretch forward the body center."},
     ]
     - You can use adverbs such as 'below', 'above', 'on the left', 'on the right' to describe positions.
     - You should only move these joints with world locations: left hand, right hand, left foot, right foot, and hip.
     - You can use any body part name as a reference, such as chest, waist, back, shoulders, etc., except for the joints listed above. You can also use 'ground', 'body center', and 'its original position'.
+    - You should locate the joint as accurately as possible, for example, if you can use 'left_shoulder' as a reference, you  shouldn't use 'body' as a reference.
     - You can use 'touching', 'slightly', 'moderately', or 'maximally' to describe the distance between the joint and the body part, indicating the level of extension of the limb.
     - If the body is moving, the hip should be moved.
     - You can generate a reasonable number of objects and reasonably distribute the time based on the rhythm of the action.
+    - If the body is moving, you should move the root to move the whole body, or if the body is rolling or flipping, you should rotate the root, like "rotate the root 90 degrees."
+    - You should try to generate movement motions for the left hand, right hand, left foot, right foot, and hip to maintain overall balance in the body's movement.
+    - You can describe more joint cooperative movements to make the motion natural and realistic.
+    - If the person is holding an object, describe the hand's position instead of the object.
     '''
     return query_command_r_plus_08_2024(user_prompt, system_prompt)
 
@@ -86,6 +101,7 @@ def generate_pose_design_streaming(user_prompt):
     - You can use 'touching', 'slightly', 'moderately', or 'maximally' to describe the distance between the joint and the body part, indicating the level of extension of the limb.
     - You can generate a reasonable number of objects and reasonably distribute the time based on the rhythm of the action.
     - You should try to generate movement motions for the left hand, right hand, left foot, right foot, and hip to maintain overall balance in the body's movement.
+    - You can describe more joint cooperative movements to make the motion natural and realistic.
     '''
     return query_command_r_plus_08_2024_streaming(user_prompt, system_prompt)
 
@@ -121,12 +137,18 @@ slightly above: add Vector((0,0,0.2)) (or more or less depending on your judgmen
 - You can simultaneously move the feet and the hip to move the character while he is in motion.
 - Use your common sense to evaluate whether the movement result might cause an abnormal limb position. If it does, adjust it slightly in another direction.
 
-You can rotate the hip, waist, chest, shoulder, left_shoulder, right_shoulder, neck, head, by:
+- You can rotate the hip, waist, chest, shoulder, left_shoulder, right_shoulder, neck, head, by:
     waist.rotation_euler.x += 0.1 # (or more or less depending on your judgment)
-You can move the left_elbow, right_elbow, left_knee, right_knee slightly to make them point to a direction by:
+- You can move the left_elbow, right_elbow, left_knee, right_knee slightly to make them point to a direction by:
     left_elbow.location.x += 0.1  # (or more or less depending on your judgment)
 When rotating, +z is right, -z is left, +y is roll back from left, -y is roll back from right, +x is forward, -x is backward.(This is differenent from moving axis)
-      
+- You can move the root to move the whole body by:
+    root.location.y += 0.1  # (or more or less depending on your judgment)
+    Note that for root movement, +y is forward, -y is backward, +x is right, -x is left, +z is up, -z is down.
+- You can rotate the root to rotate the whole body, especially when the character is hand-standing or doing a backflip by:
+    root.rotation_euler.z += 0.1  # (or more or less or other directions depending on your judgment)
+    Remember when rotating, +y is right, -y is left, +z is roll back from left, -z is roll back from right, -x is forward, +x is backward.(This is differenent from moving axis)
+- If the person is holding an object, move the hand's position instead of the object.
 '''
     user_prompt = f'''time:{time},
     pose description:{pose_desc},
@@ -228,6 +250,8 @@ shoulder = armature.pose.bones['c_spine_03.x']
 left_shoulder = armature.pose.bones['c_shoulder.l']
 right_shoulder = armature.pose.bones['c_shoulder.r']
 neck = armature.pose.bones['c_neck.x']
+root = armature.pose.bones['c_traj']
+head = armature.pose.bones['c_head.x']
 '''
 
     suffix = f'''
@@ -246,9 +270,18 @@ left_knee.keyframe_insert(data_path="location", frame={time}*24)
 right_knee.keyframe_insert(data_path="location", frame={time}*24)
 left_elbow.keyframe_insert(data_path="location", frame={time}*24)
 right_elbow.keyframe_insert(data_path="location", frame={time}*24)
+root.keyframe_insert(data_path="location", frame={time}*24)
+head.keyframe_insert(data_path="location", frame={time}*24)
+'''
+    # Remove lines containing "```" from pose_code
+    pose_code = '\n'.join(line for line in pose_code.split('\n') if '```' not in line)
+    return prefix + pose_code + suffix
+
+def generate_scheduled_pose(pose_desc, pose_code):
+    system_prompt = f'''You are a helpful assistant.
+Please generate a 
 
 '''
-    return prefix + pose_code + suffix
 
 #  异常检测与优化
 # 1. 重心优化：通过调整hip的位置大体跟随中心，减小重心失衡带来的物理不真实感；
@@ -257,6 +290,10 @@ right_elbow.keyframe_insert(data_path="location", frame={time}*24)
 # 输入： 从Blender反馈的姿态状态
 # 输出： 
 
+def refine_pose_code(overall_desc, current_desc, pose_code, body_world_pos):
+    system_prompt = '''You are a helpful assistant. You can refine the pose code to make it more realistic.
+   
+'''
 # 中心优化本质上是hip位置的优化
 def optimize_hip():
     pass  
