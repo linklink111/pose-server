@@ -282,6 +282,18 @@ def generate_scheduled_pose(pose_desc, pose_code):
 Please generate a 
 
 '''
+    
+def check_hands(pose_prompt,all_pose_design,time,pose_design,pose_state):
+    system_prompt = '''You are a helpful assistant. You can check the positions of the hands to judge whether it is reasonable for the pose design.'''
+    user_prompt = f'''Please check the hands in the pose design. The overall pose design is as follows:
+    {pose_prompt},
+    and it is one of the key pose in the pose series:{all_pose_design}
+    at time {time},{pose_design},
+    currently, it is implemented as a state, in this state, {pose_state},
+    Please give me a feedback. If the hands are not reasonable, please give me a new pose design. If the hands are reasonable, but the hand position is not adhere to the design, please give me a feedback.'''
+
+
+
 
 #  异常检测与优化
 # 1. 重心优化：通过调整hip的位置大体跟随中心，减小重心失衡带来的物理不真实感；
