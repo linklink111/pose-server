@@ -4,6 +4,7 @@ import time
 import os
 import re
 
+co = cohere.ClientV2("")
 
 def query_command_r_plus_08_2024(user_prompt, system_prompt=None):
     if system_prompt is None:
@@ -46,7 +47,6 @@ def query_command_r_plus_08_2024_streaming(user_prompt, system_prompt=None):
         return None
 
 # Theoritical Teacher in the overview graph
-
 def planning_pose(user_prompt):
     system_prompt = '''You are a helpful assistant. Your task is to plan a motion animation for a character based on the given description.
 You can choose the most suitable approach from the following options:
@@ -68,15 +68,8 @@ Another example:
     "reason": "The motion is repetitive, with the overall body remaining relatively still while only the hand moves back and forth. Therefore, it is better to use the base pose with partial movements approach.",
     "choice": 2
 }
-    system_prompt = '''You are a helpful assistant. You can plan how to make a motion animation for a character.
-Given the description of thr motion, you can smartly choose a scheme to make it.
-You can choose a scheme from below:
-
-1. Decomposite to Key Poses. This scheme is good for substantial motion.
-
-2. Base pose and partial movement. This scheme is good for simple motion.
 '''
-    return query_command_r_plus_08_2024(user_prompt, system_prompt)# Pose Designer + Physical Teacher(Relative Position)
+    return query_command_r_plus_08_2024(user_prompt, system_prompt)
 # Pose Designer + Physical Teacher(Relative Position)
 def generate_pose_design(user_prompt):
     system_prompt = '''You are a helpful assistant. You can design a pose for a character.
@@ -303,7 +296,15 @@ def generate_scheduled_pose(pose_desc, pose_code):
 Please generate a 
 
 '''
-    
+
+
+#  异常检测与优化（deprecated）======================================================
+# 1. 重心优化：通过调整hip的位置大体跟随中心，减小重心失衡带来的物理不真实感；
+# 2. 关节优化：通过检查和调整关节的旋转值，减少关节角度过小或过大带来的形体错误；
+# 3. 旋转优化：通过常识推测手、头、脚、肩膀的旋转。
+# 输入： 从Blender反馈的姿态状态
+# 输出： 
+
 def check_hands(pose_prompt,all_pose_design,time,pose_design,pose_state):
     system_prompt = '''You are a helpful assistant. You can check the positions of the hands to judge whether it is reasonable for the pose design.'''
     user_prompt = f'''Please check the hands in the pose design. The overall pose design is as follows:
@@ -312,9 +313,65 @@ def check_hands(pose_prompt,all_pose_design,time,pose_design,pose_state):
     at time {time},{pose_design},
     currently, it is implemented as a state, in this state, {pose_state},
     Please give me a feedback. If the hands are not reasonable, please give me a new pose design. If the hands are reasonable, but the hand position is not adhere to the design, please give me a feedback.'''
+    return query_command_r_plus_08_2024(user_prompt, system_prompt)
 
+# 重心优化本质上是hip位置的优化
+def optimize_hip():
+    pass  
 
 def refine_pose_code(overall_desc, current_desc, pose_code, body_world_pos):
     system_prompt = '''You are a helpful assistant. You can refine the pose code to make it more realistic.
    
 '''
+
+#  异常检测与优化（deprecated）======================================================
+
+# 检查-分析-执行(后面两步合并)
+# 由于pose code对pose design的执行不一定彻底，并且pose design也不一定合理，所以需要多次检查，直到最终的姿态符合pose prompt
+
+def check_pose(bone_mapping,pose_prompt,pose_design):
+    bone_mapping_dict = json.loads(bone_mapping)
+    stem_prompt = '''You are a helpful assistant. You can generate Blender bpy conditional branch code to determine if the current pose matches the given pose prompt and pose design. The pose prompt describes the overall action, while the pose design specifies a key pose within that action.
+For example:
+    Pose prompt: A person is performing a handstand.
+    Pose design:
+    Your output:
+    {
+        "check_list" :{
+            ["hands on the ground", "hand below the head","feet above the head"],
+        }
+        "check_code":"if left_hand.location.z < head.location.z:\n    print("left hand below the head")\nelse:\n    print("left hand above the head)\nif right_hand.location.z < head.location.z:\n    print("right hand below the head")\nelse:\n    print("right hand above the head)\nif left_foot.location.z > head.location.z:\n    print("left foot above the head")\nelse:\n    print("left foot below the head)\nif right_foot.location.z > head.location.z"
+    }
+    - You should focus on the locations of left_hand, right_hand, left_foot, right_foot.
+    - You should compare their locations to other reference body parts, like head, chest, waist, etc.
+    '''
+    user_prompt = f'''Please check the pose design. The overall pose prompt is as follows:
+    {pose_prompt},
+    and it is one of the key pose in the pose series:{pose_design}.
+    the bones you can use are:{bone_mapping_dict.keys()}
+    Please output the check list and the branch codes to check them.
+    '''
+    return query_command_r_plus_08_2024(user_prompt, system_prompt)
+
+# Analysis and response to check results
+def analyze_check_results(check_result):
+    system_prompt = '''You are a helpful assistant.You can analyze the check results and decide how to move the joints to fix the errors.
+    Example:
+    check result:
+    {   
+        "check list item":"hands on the ground",
+        "check result":False,
+        "extra info":"left_hand.location = (0.12,-0.20,-0.1)"
+    }
+    your output:
+    {   
+        "response":["move down left_hand"],
+        "response code":"left_hand.location.z -= 0.1"
+    }
+    '''
+    user_prompt = f'''Please analyze the check results. The check result is as follows:
+    {check_result}.
+    Please output the response and the branch codes to fix the errors.
+    '''
+    return query_command_r_plus_08_2024(user_prompt, system_prompt)
+
