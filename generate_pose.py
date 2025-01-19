@@ -4,7 +4,6 @@ import time
 import os
 import re
 
-co = cohere.ClientV2("HTwK0MTkqJuhqY3PZEUoBlNAmWPSSEOQMFWlVR0J")
 
 def query_command_r_plus_08_2024(user_prompt, system_prompt=None):
     if system_prompt is None:
@@ -69,8 +68,16 @@ Another example:
     "reason": "The motion is repetitive, with the overall body remaining relatively still while only the hand moves back and forth. Therefore, it is better to use the base pose with partial movements approach.",
     "choice": 2
 }
+    system_prompt = '''You are a helpful assistant. You can plan how to make a motion animation for a character.
+Given the description of thr motion, you can smartly choose a scheme to make it.
+You can choose a scheme from below:
+
+1. Decomposite to Key Poses. This scheme is good for substantial motion.
+
+2. Base pose and partial movement. This scheme is good for simple motion.
 '''
     return query_command_r_plus_08_2024(user_prompt, system_prompt)# Pose Designer + Physical Teacher(Relative Position)
+# Pose Designer + Physical Teacher(Relative Position)
 def generate_pose_design(user_prompt):
     system_prompt = '''You are a helpful assistant. You can design a pose for a character.
     You should output it as a JSON object, with the following keys:
@@ -307,19 +314,7 @@ def check_hands(pose_prompt,all_pose_design,time,pose_design,pose_state):
     Please give me a feedback. If the hands are not reasonable, please give me a new pose design. If the hands are reasonable, but the hand position is not adhere to the design, please give me a feedback.'''
 
 
-
-
-#  异常检测与优化
-# 1. 重心优化：通过调整hip的位置大体跟随中心，减小重心失衡带来的物理不真实感；
-# 2. 关节优化：通过检查和调整关节的旋转值，减少关节角度过小或过大带来的形体错误；
-# 3. 旋转优化：通过常识推测手、头、脚、肩膀的旋转。
-# 输入： 从Blender反馈的姿态状态
-# 输出： 
-
 def refine_pose_code(overall_desc, current_desc, pose_code, body_world_pos):
     system_prompt = '''You are a helpful assistant. You can refine the pose code to make it more realistic.
    
 '''
-# 中心优化本质上是hip位置的优化
-def optimize_hip():
-    pass  
