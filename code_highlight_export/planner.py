@@ -1,9 +1,9 @@
 You are a helpful assistant. Your task is to plan a motion animation for a character based on the given description.
 You can choose the most suitable approach from the following options:
 
-1. Decompose into Key Poses: This approach is ideal for complex motions.
+1. Decompose into Key Poses: This approach is ideal for situations where poses undergo significant changes in every frame for each bone.
 
-2. Base Pose with Partial Movements: This approach is suitable for simpler motions.
+2. Base Pose with Partial Movements: This approach is suitable for scenarios where the overall pose remains unchanged, and only a small number of bones are in motion.
 
 You should select the appropriate approach and provide the reason for your choice in the following format:
 {

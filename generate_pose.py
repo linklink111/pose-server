@@ -4,7 +4,7 @@ import time
 import os
 import re
 
-co = cohere.ClientV2("")
+co = cohere.ClientV2("HTwK0MTkqJuhqY3PZEUoBlNAmWPSSEOQMFWlVR0J")
 
 def query_command_r_plus_08_2024(user_prompt, system_prompt=None):
     if system_prompt is None:
@@ -47,13 +47,13 @@ def query_command_r_plus_08_2024_streaming(user_prompt, system_prompt=None):
         return None
 
 # Theoritical Teacher in the overview graph
-def planning_pose(user_prompt):
+def plan_generation_scheme(user_prompt):
     system_prompt = '''You are a helpful assistant. Your task is to plan a motion animation for a character based on the given description.
 You can choose the most suitable approach from the following options:
 
-1. Decompose into Key Poses: This approach is ideal for complex motions.
+1. Decompose into Key Poses: This approach is ideal for situations where poses undergo significant changes in every frame for each bone.
 
-2. Base Pose with Partial Movements: This approach is suitable for simpler motions.
+2. Base Pose with Partial Movements: This approach is suitable for scenarios where the overall pose remains unchanged, and only a small number of bones are in motion.
 
 You should select the appropriate approach and provide the reason for your choice in the following format:
 {
@@ -71,7 +71,7 @@ Another example:
 '''
     return query_command_r_plus_08_2024(user_prompt, system_prompt)
 
-def plan_pose_design_for_whole_body(user_prompt):
+def plan_transform_for_whole_body(user_prompt):
     system_prompt = '''You are a helpful assistant. You can design the overall human movement plan based on the user's actions and requirements. You only need to output the overall movement and rotation of the body, without considering any details. 
 For example: 
     Input: A person is doing a handstand. 
@@ -350,14 +350,18 @@ def refine_pose_code(overall_desc, current_desc, pose_code, body_world_pos):
    
 '''
 
+def refine_hands_and_feet_rotation():
+    system_prompt = '''
+'''
+
 #  异常检测与优化（deprecated）======================================================
 
 # 检查-分析-执行(后面两步合并)
 # 由于pose code对pose design的执行不一定彻底，并且pose design也不一定合理，所以需要多次检查，直到最终的姿态符合pose prompt
 
-def check_pose(bone_mapping,pose_prompt,pose_design):
+def check_hands_and_feet_location(bone_mapping,pose_prompt,pose_design):
     bone_mapping_dict = json.loads(bone_mapping)
-    stem_prompt = '''You are a helpful assistant. You can generate Blender bpy conditional branch code to determine if the current pose matches the given pose prompt and pose design. The pose prompt describes the overall action, while the pose design specifies a key pose within that action.
+    system_prompt = '''You are a helpful assistant. You can generate Blender bpy conditional branch code to determine if the current pose matches the given pose prompt and pose design. The pose prompt describes the overall action, while the pose design specifies a key pose within that action.
 For example:
     Pose prompt: A person is performing a handstand.
     Pose design:
@@ -379,6 +383,34 @@ For example:
     '''
     return query_command_r_plus_08_2024(user_prompt, system_prompt)
 
+def check_hands_and_feet_rotation(bone_mapping,pose_prompt,pose_design):
+    system_prompt = '''
+'''
+    user_prompt = f'''Please check the pose design. The overall pose prompt is as follows:
+    {pose_prompt},
+    and it is one of the key pose in the pose series:{pose_design}.
+    the bones you can use are:{bone_mapping}
+    Please output the check list and the branch codes to check them.
+    '''
+    return query_command_r_plus_08_2024(user_prompt, system_prompt)
+
+def check_arms_and_legs_folding_angles(current_joint, current_rotation, rotation_limit, extra_info):
+    system_prompt = '''You are a helpful assistant. You can fix the rotation limit error.
+You will be given the limitation ranges of the joint, and the current rotation of the joint.
+you need to output whether it need to be fixed, and output the blender code to fix it.
+
+Your output should be a json object like this:
+{
+    "need to be fixed":True,
+    "blender code":"joint.rotation_euler.x = 0"
+}
+'''
+    user_prompt = f'''
+current joint:{current_joint},
+rotation limit:{rotation_limit},
+current rotation:{current_rotation},
+extra info:{extra_info}
+'''
 # Analysis and response to check results
 def analyze_check_results(check_result):
     system_prompt = '''You are a helpful assistant.You can analyze the check results and decide how to move the joints to fix the errors.
@@ -401,3 +433,21 @@ def analyze_check_results(check_result):
     '''
     return query_command_r_plus_08_2024(user_prompt, system_prompt)
 
+# 收集runtime的offset数据，对于offset过大的进行归位（这一步好像不用LLM）
+def fix_offset_too_much_from_original_direction():
+    pass
+
+physical_anormal_error_check_list = [
+    "hands on the ground",
+    "hand below the head",
+    "feet above the head",
+    "head below the chest",
+    "chest below the waist",
+    "waist below the hip",
+    "hip below the ground",
+    "hand below the foot",
+    "hand below the head",
+    "hand below the chest",
+    "hand below the waist",
+    "hand below the hip",
+]
