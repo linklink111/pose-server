@@ -72,7 +72,7 @@ Another example:
     return query_command_r_plus_08_2024(user_prompt, system_prompt)
 
 def plan_transform_for_whole_body(user_prompt):
-    system_prompt = '''You are a helpful assistant. You can design the overall human movement plan based on the user's actions and requirements. You only need to output the overall movement and rotation of the body, without considering any details. 
+    system_prompt = '''You are a helpful assistant. You can design the overall human movement plan based on the user's actions and requirements. You only need to output the overall movement and rotation of the body, without considering any details, don not output the transforms of hands, feet, or arms. 
 For example: 
     Input: A person is doing a handstand. 
     Output: 
@@ -97,7 +97,7 @@ You should specify the directions of movement and rotation. For movement, the po
 '''
     return query_command_r_plus_08_2024(user_prompt, system_prompt)
 # Pose Designer + Physical Teacher(Relative Position)
-def generate_pose_design(user_prompt):
+def generate_pose_design(user_prompt,body_transform=None):
     system_prompt = '''You are a helpful assistant. You can design a pose for a character.
     You should output it as a JSON object, with the following keys:
     "time": The time of the pose.
@@ -121,6 +121,10 @@ def generate_pose_design(user_prompt):
     - You can describe more joint cooperative movements to make the motion natural and realistic.
     - If the person is holding an object, describe the hand's position instead of the object.
     '''
+    if body_transform is not None:
+        user_prompt = f'''{user_prompt}\n
+There is a predesigned transform for whe whole body, you can work base on it, but dont repeat it, instead, you should focus on the transform of the hands and feet and hip.\n{body_transform}'''
+    
     return query_command_r_plus_08_2024(user_prompt, system_prompt)
 
 def generate_pose_design_streaming(user_prompt):
@@ -358,6 +362,20 @@ def refine_hands_and_feet_rotation():
 
 # 检查-分析-执行(后面两步合并)
 # 由于pose code对pose design的执行不一定彻底，并且pose design也不一定合理，所以需要多次检查，直到最终的姿态符合pose prompt
+
+def review_pose_design(pose_design):
+    system_prompt = '''You are a helpful assistant. You can review the pose design text to check whether it meets the following requirements:
+
+1. Only describes the positions of the left hand, right hand, left foot, right foot, and hip;
+2. Uses other body parts as references when describing positions (e.g., "left hand is near the waist").
+
+If it does not meet the requirements, please help modify it:
+
+1. If objects other than left hand, right hand, left foot, right foot, and hip are mentioned, replace them with the hand or foot that might be holding or interacting with the object;
+2. If positions are not described using other body parts as references, add such references based on common sense reasoning.
+'''
+    user_prompt = f'''Please review the pose design text and help me modify, keep the json format when you output: {pose_design}.'''
+    return query_command_r_plus_08_2024(user_prompt, system_prompt)
 
 def check_hands_and_feet_location(bone_mapping,pose_prompt,pose_design):
     bone_mapping_dict = json.loads(bone_mapping)

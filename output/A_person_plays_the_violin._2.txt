@@ -1,0 +1,46 @@
+====================================
+Generation scheme:
+====================================
+None
+====================================
+Transform for whole body:
+====================================
+[
+    {"time":"0.0s","body transform":"The person stands upright, holding the violin and bow in preparation for playing."},
+    {"time":"1.0s","body transform":"They lift the violin to their left shoulder, with the instrument positioned under the chin."},
+    {"time":"2.0s","body transform":"The person extends their left arm forward and slightly to the left, holding the violin in a playing position."},
+    {"time":"2.5s","body transform":"They raise their right arm and draw the bow across the strings, starting to play the violin."},
+    {"time":"3.0s","body transform":"The person's right arm moves smoothly back and forth, creating a fluid motion as they continue playing the violin."},
+    {"time":"4.0s","body transform":"They may tilt their head slightly to the left to maintain eye contact with the sheet music or adjust their posture for comfort during the performance."},
+    {"time":"5.0s","body transform":"The person's body remains relatively stable, with subtle movements to accommodate the bowing arm and the need to shift positions on the violin."}
+]
+====================================
+Pose design:
+====================================
+[
+    {"time": 0.0, "pose": "left hand holds the violin neck, slightly below the shoulder. right hand holds the bow, slightly in front of the chest."},
+    {"time": 1.0, "pose": "left hand raises to the left shoulder, holding the violin. right hand moves slightly to the right, still holding the bow."},
+    {"time": 1.5, "pose": "left hand extends forward and slightly to the left, holding the violin. right hand moves to the right, preparing to draw the bow."},
+    {"time": 2.0, "pose": "left hand remains extended, with the violin in playing position. right hand draws the bow across the strings, starting the melody."},
+    {"time": 2.5, "pose": "right hand moves smoothly back and forth, creating a fluid motion while bowing. left hand adjusts slightly to maintain the violin's position."},
+    {"time": 3.0, "pose": "right hand continues the bowing motion, with the elbow slightly bent and the hand moving in a graceful arc. left hand supports the violin, slightly below the original position."},
+    {"time": 3.5, "pose": "right hand reaches the maximum extension of the bow, with the hand slightly above the head. left foot takes a small step forward for balance."},
+    {"time": 4.0, "pose": "right hand begins to move back towards the chest, continuing the bowing motion. left hand adjusts to accommodate the shifting position on the violin. head tilts slightly to the left."},
+    {"time": 4.5, "pose": "right hand returns to the starting position near the chest. left hand moves slightly to the left, still holding the violin."},
+    {"time": 5.0, "pose": "right hand and left hand make subtle adjustments to maintain the playing position. the body remains stable, with the hip slightly shifted to the left for balance."}
+]
+====================================
+Reviewed pose design:
+====================================
+[
+    {"time": 0.0, "pose": "left hand holds the violin neck, slightly below the shoulder. right hand holds the bow in front of the chest."},
+    {"time": 1.0, "pose": "left hand raises to the shoulder, holding the violin. right hand moves to the right, still holding the bow."},
+    {"time": 1.5, "pose": "left hand extends forward and to the left, holding the violin. right hand prepares to draw the bow."},
+    {"time": 2.0, "pose": "left hand remains extended, with the violin ready to play. right hand starts the melody by drawing the bow across the strings."},
+    {"time": 2.5, "pose": "right hand moves back and forth smoothly, bowing with fluid motion. left hand makes slight adjustments."},
+    {"time": 3.0, "pose": "right hand continues bowing, with a bent elbow, creating a graceful arc. left hand supports the violin below the original position."},
+    {"time": 3.5, "pose": "right hand reaches above the head at the maximum bow extension. left foot steps forward for balance."},
+    {"time": 4.0, "pose": "right hand moves back towards the chest, continuing to bow. left hand adjusts to the shifting violin position. head tilts slightly left."},
+    {"time": 4.5, "pose": "right hand returns to the chest. left hand moves to the left, holding the violin."},
+    {"time": 5.0, "pose": "hands make minor adjustments to maintain playing position. hip shifts slightly to the left for balance."}
+]

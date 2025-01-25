@@ -1,0 +1,46 @@
+====================================
+Generation scheme:
+====================================
+{
+    "scheme": "Decompose into Key Poses",
+    "reason": "Playing the violin involves intricate and varied movements of the arms, hands, and fingers, as well as subtle body movements for expression. The character's pose changes significantly as they move the bow across the strings and finger different positions. Therefore, decomposing the motion into key poses will allow for capturing the nuances and dynamics of violin playing.",
+    "choice": 1
+}
+====================================
+Transform for whole body:
+====================================
+[
+    {"time":"0.0s","body transform":"The person stands upright, holding the violin in front of them with their left hand on the neck and right hand on the bow, ready to play"},
+    {"time":"1.0s","body transform":"They lift the violin slightly and bring the bow in contact with the strings, starting to play. The body leans forward slightly, with a slight tilt to the left, following the movement of the bow"},
+    {"time":"2.0s","body transform":"The person continues playing, moving the bow across the strings with a smooth, continuous motion. The body remains tilted to the left, and the right arm moves back and forth in a controlled manner"},
+    {"time":"3.0s","body transform":"As they play a more intricate passage, the person may shift their body weight slightly, moving forward and backward in small increments to maintain balance and coordination. The left hand fingers press down on the strings, creating different notes"},
+    {"time":"4.0s","body transform":"Approaching the end of the musical phrase, the person might prepare for a more dramatic expression. They could straighten their body, creating a brief pause, and then lean into the final notes, tilting slightly to the right for emphasis"}
+]
+====================================
+Pose design:
+====================================
+[
+    {"time": 0.0, "pose": "left hand is holding the violin neck in front of the chest, with the elbow slightly bent. right hand is holding the bow, ready to play, with the elbow slightly raised."},
+    {"time": 0.5, "pose": "left hand is still holding the violin, but the elbow is straightened, lifting the violin slightly. right hand moves the bow towards the strings, with the elbow bent and the hand slightly above the waist."},
+    {"time": 1.0, "time": "right hand moves the bow smoothly across the strings, with the elbow extending and retracting. the hip shifts slightly to the left, and the left foot moves forward a bit to maintain balance."},
+    {"time": 1.5, "pose": "right hand continues the bowing motion, and the left hand fingers press and release the strings, creating a melody. the body remains tilted, with the right foot slightly behind for support."},
+    {"time": 2.0, "pose": "right hand moves the bow with more emphasis, and the left hand fingers dance across the strings. the hip shifts back to the center, and the left foot returns to its original position."},
+    {"time": 2.5, "pose": "as the music intensifies, the right hand moves faster, and the left hand fingers press harder. the body leans slightly forward, and the right foot takes a small step forward."},
+    {"time": 3.0, "pose": "the person shifts their weight, moving the hip forward and backward slightly. the right hand moves the bow with precision, and the left hand fingers create intricate notes. the feet adjust to maintain balance."},
+    {"time": 3.5, "pose": "approaching the end, the person straightens their body, creating a momentary pause. the right hand holds the bow still, and the left hand fingers release the strings."},
+    {"time": 4.0, "pose": "the person leans into the final notes, tilting their body slightly to the right. the right hand moves the bow with feeling, and the left hand fingers press the strings one last time. the hip shifts to the right, and the left foot adjusts to support the tilt."}
+]
+====================================
+Reviewed pose design:
+====================================
+[
+    {"time": 0.0, "pose": "left hand is holding the violin neck in front of the chest, with the elbow slightly bent. right hand is near the waist, ready to play."},
+    {"time": 0.5, "pose": "left hand is still holding the violin, with a straight elbow, lifting the violin. right hand moves towards the chest, with the elbow bent."},
+    {"time": 1.0, "time": "right hand extends and retracts near the chest. The hip shifts left, and the left foot moves forward slightly."},
+    {"time": 1.5, "pose": "right hand continues moving, and the left hand fingers play the strings. The body remains tilted, with the right foot back for support."},
+    {"time": 2.0, "pose": "right hand moves with emphasis, and the left hand fingers dance on the strings. The hip returns to center, and the left foot moves back."},
+    {"time": 2.5, "pose": "right hand moves faster, and the left hand presses harder. The body leans forward, and the right foot steps forward."},
+    {"time": 3.0, "pose": "The hip moves slightly forward and backward. Right hand is precise, and the left hand creates intricate notes. Feet adjust for balance."},
+    {"time": 3.5, "pose": "The body straightens for a pause. Right hand holds still, and the left hand releases the strings."},
+    {"time": 4.0, "pose": "The body tilts right. Right hand moves with feeling, and the left hand presses the strings. The hip shifts right, and the left foot adjusts to the tilt."}
+]
